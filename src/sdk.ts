@@ -1,15 +1,12 @@
 import coinflictIdl from "./IDL/pumpg.json";
 import { Pumpg } from "./IDL/pumpg";
 import * as anchor from "@coral-xyz/anchor";
-import BN, { min } from "bn.js";
+import BN from "bn.js";
 import {
-  AccountInfo,
-  clusterApiUrl,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
-  Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
@@ -19,26 +16,12 @@ import {
   metadata,
   bondingCurveAta,
 } from "./pda";
-// import { BondingCurve, Global } from "./types";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
-  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import dotenv from "dotenv";
-import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { BondingCurve } from "./types";
 import { getBuyPrice } from "./calculations";
-// import { getBuyPrice } from "./calculations";
-export const PUMP_PROGRAM_ID = new PublicKey(
-  "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
-);
-export const PUMP_AMM_PROGRAM_ID = new PublicKey(
-  "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA"
-);
-
-dotenv.config();
 
 type PublicKeyData = {};
 type PublicKeyInitData =
@@ -47,7 +30,6 @@ type PublicKeyInitData =
   | Uint8Array
   | Array<number>
   | PublicKeyData;
-type Error = {};
 
 export enum CoinFlictErrors {
   BONDING_CURVE_NOT_FOUND = "BONDING_CURVE_NOT_FOUND",
@@ -58,20 +40,20 @@ export enum CoinFlictErrors {
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
-export interface PumpFunError {
+export interface CoinFlictError {
   type: CoinFlictErrors;
   message: string;
   details?: any;
 }
 
-export type PumpFunResult<T> =
+export type CoinFlictResult<T> =
   | {
       success: true;
       data: T;
     }
   | {
       success: false;
-      error: PumpFunError;
+      error: CoinFlictError;
     };
 
 export class CoinFlictSdk {
@@ -209,7 +191,7 @@ export class CoinFlictSdk {
     slippage: number,
     amount: BN,
     solAmount: BN
-  ): Promise<PumpFunResult<TransactionInstruction[]>> {
+  ): Promise<CoinFlictResult<TransactionInstruction[]>> {
     try {
       if (!mint || !user || !amount || !solAmount) {
         return {
@@ -291,7 +273,7 @@ export class CoinFlictSdk {
     symbol: string,
     uri: string,
     user: PublicKey
-  ): Promise<PumpFunResult<TransactionInstruction>> {
+  ): Promise<CoinFlictResult<TransactionInstruction>> {
     try {
       if (!mint || !name || !symbol || !uri || !user) {
         return {
@@ -316,26 +298,14 @@ export class CoinFlictSdk {
 
       const creatTx = await this.program.methods
         .create(name, symbol, uri)
-        .accounts({
+        .accountsPartial({
           payer: user,
           mint: mint,
-          //@ts-ignore
           bondingCurve: bonding_curvePda,
           vault: vaultPda,
           bondingCurveAta: bondingCurveATA,
           global: global,
           metadata: metadata,
-          mplMetadataProgram: new PublicKey(
-            "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-          ),
-          associatedTokenProgram: new PublicKey(
-            "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-          ),
-          tokenProgram: new PublicKey(
-            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-          ),
-          rent: new PublicKey("SysvarRent111111111111111111111111111111111"),
-          systemProgram: new PublicKey("11111111111111111111111111111111"),
         })
         .instruction();
 
@@ -405,107 +375,3 @@ export class CoinFlictSdk {
     return metadata(mint);
   }
 }
-
-(async () => {
-  const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-  const sdk = new CoinFlictSdk(connection);
-  const signer = Keypair.fromSecretKey(
-    bs58.decode(
-     process.env.PRIVATE_KEY!
-    )
-  );
-
-  console.log("here is signer---", signer.publicKey);
-  // const balance = await connection.getBalance(signer.publicKey);
-
-  // console.log("here is balance!", balance/LAMPORTS_PER_SOL);
-  const mint = new PublicKey("D4PSWgkSfTdnZ9eEJ4iNMzW61SXDQCPFXPa5mFZ6HXvK");
-  const solAmount = 0.1;
-
-  const bonding_curvedata = await sdk.fetchBondingCurve(mint);
-
-  const tokenamount = sdk.getTokenAmount(bonding_curvedata, solAmount);
-
-  console.log("here is token amount i get--", Number(tokenamount) / 1000000);
-
-  //   const itx = await sdk.getCreateTxs(mint.publicKey,"random","ANS","https://ipfs.io/ipfs/bafkreiaaqjofhbmgwb2qb2kiewhcne373v5cvrtrwloz5btrj7mtkly73i",signer.publicKey);
-
-  //   if(itx.success){
-  //       const trans = new Transaction().add(itx.data);
-  //       trans.feePayer = signer.publicKey;
-
-  //       const {blockhash} = await connection.getLatestBlockhash();
-  //       trans.recentBlockhash = blockhash;
-
-  //       trans.sign(signer,mint)
-  //       const tx = await connection.sendRawTransaction(trans.serialize());
-
-  //      console.log("here is the txs", tx)
-  //   }
-
-  // const tx = await sdk.getBuyTxs(
-  //   mint,
-  //   signer.publicKey,
-  //   10,
-  //   new BN(tokenamount.toString()),
-  //   new BN(0.1 * LAMPORTS_PER_SOL)
-  // );
-
-  // if (tx.success) {
-  //   if (!tx.data) return;
-
-  //   console.log("loadinggg");
-  //   const transection = new Transaction().add(...tx.data);
-
-  //   transection.feePayer = signer.publicKey;
-
-  //   const { blockhash } = await connection.getLatestBlockhash();
-  //   transection.recentBlockhash = blockhash;
-  //   transection.sign(signer);
-
-  //   const simulation = await connection.simulateTransaction(transection);
-
-  //   console.log("here is simulaion result---", simulation);
-
-  //   const res = await connection.sendRawTransaction(transection.serialize());
-
-  //   console.log("this amount should be. buy!!", Number(tokenamount) / 1000000);
-  //   console.log("here is the signature---", res);
-  // }
-
-
-
-    const userAta = getAssociatedTokenAddressSync(mint, signer.publicKey, true);
-
-    console.log("User ATA:", userAta.toBase58());
-
-    const tokenAccountInfo = await connection.getTokenAccountBalance(userAta);
-    if (!tokenAccountInfo) {
-        console.error("User ATA account not found");
-        return;
-    }
-
-    console.log("User Token Hoding amount:", tokenAccountInfo.value.uiAmount);
-
-
-
-  const Itx = await sdk.getSellTxs(mint,signer.publicKey,10,new BN(tokenAccountInfo.value.amount), new BN(-1));
-
-  if(Itx.success){
-    const transaction = new Transaction().add(...Itx.data);
-
-    transaction.feePayer = signer.publicKey;
-
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.sign(signer);
-
-    // const simulation = await connection.simulateTransaction(transaction);
-
-    const res = await connection.sendRawTransaction(transaction.serialize());
-
-
-    console.log("here is signature--", res);
-
-  }
-})();
