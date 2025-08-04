@@ -1,6 +1,6 @@
 # coinflict-kit
 
-A TypeScript SDK for [coinflict.fun](https://coinflict.fun) - A Solana token launchpad platform.
+A TypeScript SDK for [coinflict.fun](https://coinflict.fun) - A Sonic and Solana token launchpad platform.
 
 ## Installation
 
