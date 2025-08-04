@@ -2,3 +2,13 @@ node_modules
 .env
 package-lock.json
 .DS_Store
+dist
+coinflict-kit-1.0.0.tgz
+coverage
+*.log
+*.tsbuildinfo
+.vscode
+.idea
+*.swp
+*.swo
+*.swn
