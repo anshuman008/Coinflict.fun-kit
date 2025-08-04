@@ -21,7 +21,7 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { BondingCurve } from "./types";
-import { getBuyPrice } from "./calculations";
+import { getBuyPrice, getSellPrice } from "./calculations";
 
 type PublicKeyData = {};
 type PublicKeyInitData =
@@ -355,6 +355,24 @@ export class CoinFlictSdk {
     );
 
     return Number(tokenamount);
+  }
+
+
+
+  getSolAmount(bondingCurve: BondingCurve, TokenAmount: number):Number {
+    
+    const amount = TokenAmount*1000000;
+
+    const solAmount = getSellPrice(
+      BigInt(amount),
+      BigInt(10),
+      BigInt(bondingCurve.virtualSolReserve.toNumber()),
+      BigInt( bondingCurve.virtualTokenReserve.toNumber()),
+      bondingCurve.complete
+    )
+    
+    return Number(solAmount);
+  
   }
 
   async fetchGlobal(): Promise<any> {

@@ -42,3 +42,27 @@ export const getBuyPrice = (amount: bigint , virtual_sol_reserve: bigint ,virtua
 
   // return s;
 }
+
+
+export const getSellPrice = (amount: bigint , feeBasisPoints: bigint, virtual_sol_reserve: bigint ,virtual_token_reserve: bigint, complete:boolean): bigint => {
+  if (complete) {
+    throw new Error("Curve is complete");
+  }
+
+  //@ts-ignore
+  if (amount <= 0n) {
+    //@ts-ignore
+    return 0n;
+  }
+
+  // Calculate the proportional amount of virtual sol reserves to be received
+  let n = (amount * virtual_sol_reserve) / (virtual_token_reserve + amount);
+
+  // Calculate the fee amount in the same units
+
+  //@ts-ignore
+  let a = (n * feeBasisPoints) / 10000n;
+
+  // Return the net amount after deducting the fee
+  return n - a;
+}

@@ -18,9 +18,6 @@ const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 const sdk = new CoinFlictSdk(connection);
 const signer = Keypair.fromSecretKey(bs58.decode(process.env.PRIVATE_KEY!));
 
-
-
-
 const createToken = async () => {
   const mint = Keypair.generate();
   const itx = await sdk.getCreateTxs(
@@ -46,9 +43,8 @@ const createToken = async () => {
 };
 
 const buyToken = async (mint: PublicKey) => {
-
   const intialBalance = await connection.getBalance(signer.publicKey);
-  console.log("here is initial balance--", intialBalance/LAMPORTS_PER_SOL);
+  console.log("here is initial balance--", intialBalance / LAMPORTS_PER_SOL);
 
   const solAmount = 1;
 
@@ -85,15 +81,16 @@ const buyToken = async (mint: PublicKey) => {
 
     console.log("here is the signature---", res);
 
-    
     console.log("this amount should be. buy!!", Number(tokenamount) / 1000000);
 
     const finalBalance = await connection.getBalance(signer.publicKey);
 
-    
-    console.log("here is initial balance--", finalBalance/LAMPORTS_PER_SOL);
+    console.log("here is initial balance--", finalBalance / LAMPORTS_PER_SOL);
 
-    console.log("sol invested ---", (intialBalance-finalBalance)/LAMPORTS_PER_SOL);
+    console.log(
+      "sol invested ---",
+      (intialBalance - finalBalance) / LAMPORTS_PER_SOL
+    );
   }
 };
 
@@ -109,6 +106,20 @@ const sellAllToken = async (mint: PublicKey) => {
   }
 
   console.log("User Token Hoding amount:", tokenAccountInfo.value.uiAmount);
+
+  const bonding_curvedata = await sdk.fetchBondingCurve(mint);
+
+  if(!tokenAccountInfo.value.uiAmount) return;
+
+
+  const solAmount = sdk.getSolAmount(
+    bonding_curvedata,
+    tokenAccountInfo.value.uiAmount
+  );
+  console.log(
+    "here is sol amount get in reverse--",
+    Number(solAmount) / LAMPORTS_PER_SOL
+  );
 
   const Itx = await sdk.getSellTxs(
     mint,
@@ -137,4 +148,4 @@ const sellAllToken = async (mint: PublicKey) => {
 
 // createToken();
 // buyToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
-// sellAllToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
+sellAllToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
