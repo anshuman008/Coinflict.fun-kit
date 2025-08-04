@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/spl-token": "^0.4.13",
+    "@types/bn.js": "^5.2.0",
+    "bn.js": "^5.2.2",
+    "dotenv": "^17.2.1"
+  }
+}
