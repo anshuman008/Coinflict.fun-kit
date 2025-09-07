@@ -14,9 +14,9 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 dotenv.config();
 
-const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+const connection = new Connection("https://api.testnet.sonic.game", "finalized");
 const sdk = new CoinFlictSdk(connection);
-const signer = Keypair.fromSecretKey(bs58.decode(process.env.PRIVATE_KEY!));
+const signer = Keypair.fromSecretKey(bs58.decode("2Y7jZKHd1MxMvXjKSKAioYymqfRBoynoGgBvCTUkXKSPAPCKmdFsNfaws3L6gEHE7U1om61XSKdV86CaafEDRkfA"));
 
 const createToken = async () => {
   const mint = Keypair.generate();
@@ -42,110 +42,110 @@ const createToken = async () => {
   }
 };
 
-const buyToken = async (mint: PublicKey) => {
-  const intialBalance = await connection.getBalance(signer.publicKey);
-  console.log("here is initial balance--", intialBalance / LAMPORTS_PER_SOL);
+// const buyToken = async (mint: PublicKey) => {
+//   const intialBalance = await connection.getBalance(signer.publicKey);
+//   console.log("here is initial balance--", intialBalance / LAMPORTS_PER_SOL);
 
-  const solAmount = 1;
+//   const solAmount = 1;
 
-  const bonding_curvedata = await sdk.fetchBondingCurve(mint);
+//   const bonding_curvedata = await sdk.fetchBondingCurve(mint);
 
-  const tokenamount = sdk.getTokenAmount(bonding_curvedata, solAmount);
-  console.log("here is token amount i get--", Number(tokenamount) / 1000000);
+//   const tokenamount = sdk.getTokenAmount(bonding_curvedata, solAmount);
+//   console.log("here is token amount i get--", Number(tokenamount) / 1000000);
 
-  const tx = await sdk.getBuyTxs(
-    mint,
-    signer.publicKey,
-    10,
-    new BN(tokenamount.toString()),
-    new BN(solAmount * LAMPORTS_PER_SOL)
-  );
+//   // const tx = await sdk.getBuyTxs(
+//   //   mint,
+//   //   signer.publicKey,
+//   //   10,
+//   //   new BN(tokenamount.toString()),
+//   //   new BN(solAmount * LAMPORTS_PER_SOL)
+//   // );
 
-  if (tx.success) {
-    if (!tx.data) return;
+//   if (tx.success) {
+//     if (!tx.data) return;
 
-    const transection = new Transaction().add(...tx.data);
+//     const transection = new Transaction().add(...tx.data);
 
-    transection.feePayer = signer.publicKey;
+//     transection.feePayer = signer.publicKey;
 
-    const { blockhash } = await connection.getLatestBlockhash();
-    transection.recentBlockhash = blockhash;
-    transection.sign(signer);
+//     const { blockhash } = await connection.getLatestBlockhash();
+//     transection.recentBlockhash = blockhash;
+//     transection.sign(signer);
 
-    const simulation = await connection.simulateTransaction(transection);
+//     const simulation = await connection.simulateTransaction(transection);
 
-    console.log("here is simulaion result---", simulation);
+//     console.log("here is simulaion result---", simulation);
 
-    const res = await connection.sendRawTransaction(transection.serialize());
-    await connection.confirmTransaction(res);
+//     const res = await connection.sendRawTransaction(transection.serialize());
+//     await connection.confirmTransaction(res);
 
-    console.log("here is the signature---", res);
+//     console.log("here is the signature---", res);
 
-    console.log("this amount should be. buy!!", Number(tokenamount) / 1000000);
+//     console.log("this amount should be. buy!!", Number(tokenamount) / 1000000);
 
-    const finalBalance = await connection.getBalance(signer.publicKey);
+//     const finalBalance = await connection.getBalance(signer.publicKey);
 
-    console.log("here is initial balance--", finalBalance / LAMPORTS_PER_SOL);
+//     console.log("here is initial balance--", finalBalance / LAMPORTS_PER_SOL);
 
-    console.log(
-      "sol invested ---",
-      (intialBalance - finalBalance) / LAMPORTS_PER_SOL
-    );
-  }
-};
+//     console.log(
+//       "sol invested ---",
+//       (intialBalance - finalBalance) / LAMPORTS_PER_SOL
+//     );
+//   }
+// };
 
-const sellAllToken = async (mint: PublicKey) => {
-  const userAta = getAssociatedTokenAddressSync(mint, signer.publicKey, true);
+// const sellAllToken = async (mint: PublicKey) => {
+//   const userAta = getAssociatedTokenAddressSync(mint, signer.publicKey, true);
 
-  console.log("User ATA:", userAta.toBase58());
+//   console.log("User ATA:", userAta.toBase58());
 
-  const tokenAccountInfo = await connection.getTokenAccountBalance(userAta);
-  if (!tokenAccountInfo) {
-    console.error("User ATA account not found");
-    return;
-  }
+//   const tokenAccountInfo = await connection.getTokenAccountBalance(userAta);
+//   if (!tokenAccountInfo) {
+//     console.error("User ATA account not found");
+//     return;
+//   }
 
-  console.log("User Token Hoding amount:", tokenAccountInfo.value.uiAmount);
+//   console.log("User Token Hoding amount:", tokenAccountInfo.value.uiAmount);
 
-  const bonding_curvedata = await sdk.fetchBondingCurve(mint);
+//   const bonding_curvedata = await sdk.fetchBondingCurve(mint);
 
-  if(!tokenAccountInfo.value.uiAmount) return;
+//   if(!tokenAccountInfo.value.uiAmount) return;
 
 
-  const solAmount = sdk.getSolAmount(
-    bonding_curvedata,
-    tokenAccountInfo.value.uiAmount
-  );
-  console.log(
-    "here is sol amount get in reverse--",
-    Number(solAmount) / LAMPORTS_PER_SOL
-  );
+//   const solAmount = sdk.getSolAmount(
+//     bonding_curvedata,
+//     tokenAccountInfo.value.uiAmount
+//   );
+//   console.log(
+//     "here is sol amount get in reverse--",
+//     Number(solAmount) / LAMPORTS_PER_SOL
+//   );
 
-  const Itx = await sdk.getSellTxs(
-    mint,
-    signer.publicKey,
-    10,
-    new BN(tokenAccountInfo.value.amount),
-    new BN(-1)
-  );
+//   const Itx = await sdk.getSellTxs(
+//     mint,
+//     signer.publicKey,
+//     10,
+//     new BN(tokenAccountInfo.value.amount),
+//     new BN(-1)
+//   );
 
-  if (Itx.success) {
-    const transaction = new Transaction().add(...Itx.data);
+//   if (Itx.success) {
+//     const transaction = new Transaction().add(...Itx.data);
 
-    transaction.feePayer = signer.publicKey;
+//     transaction.feePayer = signer.publicKey;
 
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.sign(signer);
+//     const { blockhash } = await connection.getLatestBlockhash();
+//     transaction.recentBlockhash = blockhash;
+//     transaction.sign(signer);
 
-    // const simulation = await connection.simulateTransaction(transaction);
+//     // const simulation = await connection.simulateTransaction(transaction);
 
-    const res = await connection.sendRawTransaction(transaction.serialize());
+//     const res = await connection.sendRawTransaction(transaction.serialize());
 
-    console.log("here is signature--", res);
-  }
-};
+//     console.log("here is signature--", res);
+//   }
+// };
 
-// createToken();
+createToken();
 // buyToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
-sellAllToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
+// sellAllToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
