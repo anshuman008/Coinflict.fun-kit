@@ -23,6 +23,7 @@ import {
 } from "@solana/spl-token";
 import { BondingCurve } from "./types";
 import { getBuyPrice, getSellPrice } from "./calculations";
+import { BN } from "bn.js";
 
 
 type PublicKeyData = {};
@@ -79,119 +80,123 @@ export class CoinFlictSdk {
     this.program = pumpProgram;
   }
 
-  // async getBuyTxs(
-  //   mint: PublicKey,
-  //   user: PublicKey,
-  //   slippage: number,
-  //   amount: BN,
-  //   solAmount: BN
-  // ) {
-  //   try {
-  //     if (!mint || !user || !amount || !solAmount) {
-  //       return {
-  //         success: false,
-  //         error: {
-  //           type: CoinFlictErrors.INVALID_PARAMETERS,
-  //           message: "Invalid parameters provided",
-  //           details: { mint, user, amount, solAmount },
-  //         },
-  //       };
-  //     }
+  async getBuyTxs(
+    mint: PublicKey,
+    user: PublicKey,
+    slippage: number,
+    amount: anchor.BN,
+    solAmount: anchor.BN
+  ) {
+    try {
+      if (!mint || !user || !amount || !solAmount) {
+        return {
+          success: false,
+          error: {
+            type: CoinFlictErrors.INVALID_PARAMETERS,
+            message: "Invalid parameters provided",
+            details: { mint, user, amount, solAmount },
+          },
+        };
+      }
 
-  //     if (slippage < 0) {
-  //       return {
-  //         success: false,
-  //         error: {
-  //           type: CoinFlictErrors.INVALID_PARAMETERS,
-  //           message: "Slippage canot be in negative",
-  //           details: { slippage },
-  //         },
-  //       };
-  //     }
+      if (slippage < 0) {
+        return {
+          success: false,
+          error: {
+            type: CoinFlictErrors.INVALID_PARAMETERS,
+            message: "Slippage canot be in negative",
+            details: { slippage },
+          },
+        };
+      }
 
-  //     const bonding_curvePda = this.bondingCurvePda(mint);
-  //     const vaultPda = this.vaultPda(mint);
-  //     const bondingCurveATA = await this.findAssociatedTokenAddress(
-  //       bonding_curvePda,
-  //       mint
-  //     );
-  //     console.log("Bonding Curve PDA:", bonding_curvePda.toBase58());
-  //     const bondingCurveAccountInfo =
-  //       await this.program.provider.connection.getAccountInfo(bonding_curvePda);
+      const bonding_curvePda = this.bondingCurvePda(mint);
+      const vaultPda = this.vaultPda(mint);
+      const bondingCurveATA = await this.findAssociatedTokenAddress(
+        bonding_curvePda,
+        mint
+      );
+      const global = this.globalPda();
 
-  //     if (!bondingCurveAccountInfo) {
-  //       return {
-  //         success: false,
-  //         error: {
-  //           type: CoinFlictErrors.BONDING_CURVE_NOT_FOUND,
-  //           message: "Bonding Curve account not found for this token",
-  //           details: {
-  //             mint: mint.toBase58(),
-  //             bondingCurvePda: bonding_curvePda.toBase58(),
-  //           },
-  //         },
-  //       };
-  //     }
+      console.log("Bonding Curve PDA:", bonding_curvePda.toBase58());
+      const bondingCurveAccountInfo =
+        await this.program.provider.connection.getAccountInfo(bonding_curvePda);
 
-  //     const instructions: TransactionInstruction[] = [];
-  //     const associatedUser = getAssociatedTokenAddressSync(mint, user, true);
+      if (!bondingCurveAccountInfo) {
+        return {
+          success: false,
+          error: {
+            type: CoinFlictErrors.BONDING_CURVE_NOT_FOUND,
+            message: "Bonding Curve account not found for this token",
+            details: {
+              mint: mint.toBase58(),
+              bondingCurvePda: bonding_curvePda.toBase58(),
+            },
+          },
+        };
+      }
 
-  //     const userTokenAccount =
-  //       await this.program.provider.connection.getAccountInfo(associatedUser);
+      const instructions: TransactionInstruction[] = [];
+      const associatedUser = getAssociatedTokenAddressSync(mint, user, true);
 
-  //     if (!userTokenAccount) {
-  //       instructions.push(
-  //         createAssociatedTokenAccountIdempotentInstruction(
-  //           user,
-  //           associatedUser,
-  //           user,
-  //           mint
-  //         )
-  //       );
-  //     }
+      const userTokenAccount =
+        await this.program.provider.connection.getAccountInfo(associatedUser);
 
-  //     console.log("pushing the transaction-------");
-  //     instructions.push(
-  //       await this.program.methods
-  //         .buy(
-  //           amount,
-  //           solAmount.add(
-  //             solAmount.mul(new BN(Math.floor(slippage * 10))).div(new BN(1000))
-  //           )
-  //         )
-  //         .accountsPartial({
-  //           user: user,
-  //           feeRecipient: new PublicKey(
-  //             "DKbqMnDju2ftYBKM65DhPMLi7foVt5QPmbCmeeTk5eSN"
-  //           ),
-  //           vault: vaultPda,
-  //           bondingCurve: bonding_curvePda,
-  //           bondingCurveAta: bondingCurveATA,
-  //           userAta: associatedUser,
-  //           mint: mint,
-  //         })
-  //         .instruction()
-  //     );
+      if (!userTokenAccount) {
+        instructions.push(
+          createAssociatedTokenAccountIdempotentInstruction(
+            user,
+            associatedUser,
+            user,
+            mint
+          )
+        );
+      }
 
-  //     return {
-  //       success: true,
-  //       data: instructions,
-  //     };
-  //   } catch (error) {
-  //     console.error("Error in getBuyTxs:", error);
-  //     return {
-  //       success: false,
-  //       error: {
-  //         type: CoinFlictErrors.UNKNOWN_ERROR,
-  //         message:
-  //           error instanceof Error
-  //             ? error.message
-  //             : "An unknown error occurred",
-  //         details: error,
-  //       },
-  //     };
-  //   }
-  // }
+      console.log("pushing the transaction-------");
+      instructions.push(
+        await this.program.methods
+          .buy(
+            amount,
+            solAmount.add(
+              solAmount.mul(new BN(Math.floor(slippage * 10))).div(new BN(1000))
+            )
+          )
+          .accountsStrict({
+      user: user,
+      global: global,
+      feeRecipient: user,
+      bondingCurve: bonding_curvePda,
+      bondingCurveAta: bondingCurveATA,
+      vault: vaultPda,
+      userAta: bondingCurveATA,
+      mint: mint,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId
+          })
+          .instruction()
+      );
+
+      return {
+        success: true,
+        data: instructions,
+      };
+    } catch (error) {
+      console.error("Error in getBuyTxs:", error);
+      return {
+        success: false,
+        error: {
+          type: CoinFlictErrors.UNKNOWN_ERROR,
+          message:
+            error instanceof Error
+              ? error.message
+              : "An unknown error occurred",
+          details: error,
+        },
+      };
+    }
+  }
 
   // async getSellTxs(
   //   mint: PublicKey,
