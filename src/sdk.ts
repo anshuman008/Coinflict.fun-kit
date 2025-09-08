@@ -37,7 +37,9 @@ const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
   "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 );
 
-const FEES_RECIPIENT = new PublicKey("DKbqMnDju2ftYBKM65DhPMLi7foVt5QPmbCmeeTk5eSN");
+const FEES_RECIPIENT = new PublicKey(
+  "DKbqMnDju2ftYBKM65DhPMLi7foVt5QPmbCmeeTk5eSN"
+);
 export enum CoinFlictErrors {
   BONDING_CURVE_NOT_FOUND = "BONDING_CURVE_NOT_FOUND",
   GLOBAL_DATA_NOT_FOUND = "GLOBAL_DATA_NOT_FOUND",

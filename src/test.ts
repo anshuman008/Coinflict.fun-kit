@@ -1,7 +1,6 @@
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { CoinFlictSdk } from "./sdk";
 import {
-  clusterApiUrl,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
@@ -11,7 +10,6 @@ import {
 import dotenv from "dotenv";
 import { BN } from "bn.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import fs from "fs";
 
 dotenv.config();
 
@@ -46,7 +44,6 @@ const createToken = async () => {
 };
 
 const buyToken = async (mint: PublicKey) => { 
-
 
   // const signature = "2GE7w9QEtDtqAgKSQ5uGAHaoGDShmCnkvgGBNw7LRnMLHGCysFtJsqQHPfMy8BqCM9gZ17EGksmXYbMCieBE9RjS";
   // const txDetals = await connection.getParsedTransaction(signature);
@@ -165,6 +162,6 @@ const sellAllToken = async (mint: PublicKey) => {
 };
 
 // createToken();
-// buyToken(new PublicKey("BxBXred97wKEpy8cHcD2tHbVP9f2r2jJ9x9tz64mWhM2"));
-sellAllToken(new PublicKey("BxBXred97wKEpy8cHcD2tHbVP9f2r2jJ9x9tz64mWhM2"));
+// buyToken(new PublicKey("DM6mSKHKThQfSSSSRWMfjhFwzV8xZryzggpByxSfEjCG"));
+sellAllToken(new PublicKey("DM6mSKHKThQfSSSSRWMfjhFwzV8xZryzggpByxSfEjCG"));
 
