@@ -9,7 +9,7 @@
     "rootDir": "./",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
 
     /* Emit */
     "declaration": true,
