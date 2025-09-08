@@ -1,7 +1,6 @@
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { CoinFlictSdk } from "./sdk";
 import {
-  clusterApiUrl,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
@@ -14,12 +13,14 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 dotenv.config();
 
-const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+const connection = new Connection("https://api.testnet.sonic.game", "finalized");
 const sdk = new CoinFlictSdk(connection);
 const signer = Keypair.fromSecretKey(bs58.decode(process.env.PRIVATE_KEY!));
 
 const createToken = async () => {
   const mint = Keypair.generate();
+
+  console.log("here is token mint---", mint.publicKey.toBase58());
   const itx = await sdk.getCreateTxs(
     mint.publicKey,
     "random",
@@ -42,13 +43,26 @@ const createToken = async () => {
   }
 };
 
-const buyToken = async (mint: PublicKey) => {
+const buyToken = async (mint: PublicKey) => { 
+
+  // const signature = "2GE7w9QEtDtqAgKSQ5uGAHaoGDShmCnkvgGBNw7LRnMLHGCysFtJsqQHPfMy8BqCM9gZ17EGksmXYbMCieBE9RjS";
+  // const txDetals = await connection.getParsedTransaction(signature);
+
+
+  // console.log("her is detail---",txDetals);
+
+  // fs.writeFileSync("message.json",JSON.stringify(txDetals,null,2));
+
+
+
   const intialBalance = await connection.getBalance(signer.publicKey);
   console.log("here is initial balance--", intialBalance / LAMPORTS_PER_SOL);
 
   const solAmount = 1;
 
   const bonding_curvedata = await sdk.fetchBondingCurve(mint);
+
+  console.log("here is the bonding curve----",bonding_curvedata);
 
   const tokenamount = sdk.getTokenAmount(bonding_curvedata, solAmount);
   console.log("here is token amount i get--", Number(tokenamount) / 1000000);
@@ -92,7 +106,8 @@ const buyToken = async (mint: PublicKey) => {
       (intialBalance - finalBalance) / LAMPORTS_PER_SOL
     );
   }
-};
+}
+
 
 const sellAllToken = async (mint: PublicKey) => {
   const userAta = getAssociatedTokenAddressSync(mint, signer.publicKey, true);
@@ -147,5 +162,6 @@ const sellAllToken = async (mint: PublicKey) => {
 };
 
 // createToken();
-// buyToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
-sellAllToken(new PublicKey("2wnrgTFjS92fCFEqLTsnEWwVqSdhAjwWBAWw2BVLvcb8"));
+// buyToken(new PublicKey("DM6mSKHKThQfSSSSRWMfjhFwzV8xZryzggpByxSfEjCG"));
+sellAllToken(new PublicKey("DM6mSKHKThQfSSSSRWMfjhFwzV8xZryzggpByxSfEjCG"));
+

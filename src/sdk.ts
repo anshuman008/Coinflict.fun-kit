@@ -1,7 +1,6 @@
 import coinflictIdl from "./IDL/pumpg.json";
-import { Pumpg } from "./IDL/pumpg";
+import { Coinflict } from "./IDL/pumpg";
 import * as anchor from "@coral-xyz/anchor";
-import BN from "bn.js";
 import {
   Connection,
   Keypair,
@@ -17,11 +16,14 @@ import {
   bondingCurveAta,
 } from "./pda";
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   createAssociatedTokenAccountIdempotentInstruction,
   getAssociatedTokenAddressSync,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { BondingCurve } from "./types";
 import { getBuyPrice, getSellPrice } from "./calculations";
+import { BN } from "bn.js";
 
 type PublicKeyData = {};
 type PublicKeyInitData =
@@ -31,6 +33,13 @@ type PublicKeyInitData =
   | Array<number>
   | PublicKeyData;
 
+const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+);
+
+const FEES_RECIPIENT = new PublicKey(
+  "DKbqMnDju2ftYBKM65DhPMLi7foVt5QPmbCmeeTk5eSN"
+);
 export enum CoinFlictErrors {
   BONDING_CURVE_NOT_FOUND = "BONDING_CURVE_NOT_FOUND",
   GLOBAL_DATA_NOT_FOUND = "GLOBAL_DATA_NOT_FOUND",
@@ -57,15 +66,22 @@ export type CoinFlictResult<T> =
     };
 
 export class CoinFlictSdk {
-  private program: anchor.Program<Pumpg>;
+  private program: anchor.Program<Coinflict>;
 
   constructor(connection: Connection) {
     const keypair = Keypair.generate();
     const wallet = new anchor.Wallet(keypair);
-    const provider = new anchor.AnchorProvider(connection, wallet);
+    const provider = new anchor.AnchorProvider(connection, wallet, {
+      commitment: "finalized",
+    });
+    const programId = new PublicKey(
+      "9dQKrnhnnbVyUZCnXxPRpjG9rJqW8SbXaasdE2PXpugB"
+    );
 
-    const pumpProgram = new anchor.Program<Pumpg>(
-      coinflictIdl as Pumpg,
+    const pumpProgram = new anchor.Program<Coinflict>(
+      //@ts-ignore
+      coinflictIdl as Coinflict,
+      programId,
       provider
     );
     this.program = pumpProgram;
@@ -75,8 +91,8 @@ export class CoinFlictSdk {
     mint: PublicKey,
     user: PublicKey,
     slippage: number,
-    amount: BN,
-    solAmount: BN
+    amount: anchor.BN,
+    solAmount: anchor.BN
   ) {
     try {
       if (!mint || !user || !amount || !solAmount) {
@@ -107,6 +123,8 @@ export class CoinFlictSdk {
         bonding_curvePda,
         mint
       );
+      const global = this.globalPda();
+
       console.log("Bonding Curve PDA:", bonding_curvePda.toBase58());
       const bondingCurveAccountInfo =
         await this.program.provider.connection.getAccountInfo(bonding_curvePda);
@@ -151,16 +169,18 @@ export class CoinFlictSdk {
               solAmount.mul(new BN(Math.floor(slippage * 10))).div(new BN(1000))
             )
           )
-          .accountsPartial({
+          .accountsStrict({
             user: user,
-            feeRecipient: new PublicKey(
-              "DKbqMnDju2ftYBKM65DhPMLi7foVt5QPmbCmeeTk5eSN"
-            ),
-            vault: vaultPda,
+            global: global,
+            feeRecipient: FEES_RECIPIENT,
             bondingCurve: bonding_curvePda,
             bondingCurveAta: bondingCurveATA,
+            vault: vaultPda,
             userAta: associatedUser,
             mint: mint,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: anchor.web3.SystemProgram.programId,
           })
           .instruction()
       );
@@ -189,8 +209,8 @@ export class CoinFlictSdk {
     mint: PublicKey,
     user: PublicKey,
     slippage: number,
-    amount: BN,
-    solAmount: BN
+    amount: anchor.BN,
+    solAmount: anchor.BN
   ): Promise<CoinFlictResult<TransactionInstruction[]>> {
     try {
       if (!mint || !user || !amount || !solAmount) {
@@ -217,7 +237,7 @@ export class CoinFlictSdk {
 
       const instructions: TransactionInstruction[] = [];
       const associatedUser = getAssociatedTokenAddressSync(mint, user, true);
-
+      const global = this.globalPda();
       const bonding_curvePda = this.bondingCurvePda(mint);
       const vaultPda = this.vaultPda(mint);
       const bondingCurveATA = await this.findAssociatedTokenAddress(
@@ -233,16 +253,18 @@ export class CoinFlictSdk {
               solAmount.mul(new BN(Math.floor(slippage * 10))).div(new BN(1000))
             )
           )
-          .accountsPartial({
+          .accountsStrict({
             user: user,
-            feeRecipient: new PublicKey(
-              "DKbqMnDju2ftYBKM65DhPMLi7foVt5QPmbCmeeTk5eSN"
-            ),
-            vault: vaultPda,
+            global: global,
+            feeRecipient: FEES_RECIPIENT,
             bondingCurve: bonding_curvePda,
+            vault: vaultPda,
             bondingCurveAta: bondingCurveATA,
             userAta: associatedUser,
             mint: mint,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            systemProgram: anchor.web3.SystemProgram.programId,
           })
           .instruction()
       );
@@ -298,7 +320,7 @@ export class CoinFlictSdk {
 
       const creatTx = await this.program.methods
         .create(name, symbol, uri)
-        .accountsPartial({
+        .accountsStrict({
           payer: user,
           mint: mint,
           bondingCurve: bonding_curvePda,
@@ -306,6 +328,11 @@ export class CoinFlictSdk {
           bondingCurveAta: bondingCurveATA,
           global: global,
           metadata: metadata,
+          mplMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+          systemProgram: anchor.web3.SystemProgram.programId,
         })
         .instruction();
 
@@ -357,22 +384,18 @@ export class CoinFlictSdk {
     return Number(tokenamount);
   }
 
-
-
-  getSolAmount(bondingCurve: BondingCurve, TokenAmount: number):Number {
-    
-    const amount = TokenAmount*1000000;
+  getSolAmount(bondingCurve: BondingCurve, TokenAmount: number): Number {
+    const amount = TokenAmount * 1000000;
 
     const solAmount = getSellPrice(
       BigInt(amount),
       BigInt(10),
       BigInt(bondingCurve.virtualSolReserve.toNumber()),
-      BigInt( bondingCurve.virtualTokenReserve.toNumber()),
+      BigInt(bondingCurve.virtualTokenReserve.toNumber()),
       bondingCurve.complete
-    )
-    
+    );
+
     return Number(solAmount);
-  
   }
 
   async fetchGlobal(): Promise<any> {

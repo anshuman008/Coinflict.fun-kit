@@ -46,7 +46,7 @@ export const bondingCurveAta = (
     mint: PublicKey | string,
 ) => {
     return PublicKey.findProgramAddressSync(
-        [Buffer.from("curve-vault"), new PublicKey(mint).toBuffer()],
+        [Buffer.from("curve_vault"), new PublicKey(mint).toBuffer()],
         programId,
     )[0];
 };
