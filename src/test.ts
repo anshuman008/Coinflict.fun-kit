@@ -165,6 +165,6 @@ const sellAllToken = async (mint: PublicKey) => {
 };
 
 // createToken();
-buyToken(new PublicKey("BxBXred97wKEpy8cHcD2tHbVP9f2r2jJ9x9tz64mWhM2"));
-// sellAllToken(new PublicKey("BxBXred97wKEpy8cHcD2tHbVP9f2r2jJ9x9tz64mWhM2"));
+// buyToken(new PublicKey("BxBXred97wKEpy8cHcD2tHbVP9f2r2jJ9x9tz64mWhM2"));
+sellAllToken(new PublicKey("BxBXred97wKEpy8cHcD2tHbVP9f2r2jJ9x9tz64mWhM2"));
 

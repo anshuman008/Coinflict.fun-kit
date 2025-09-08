@@ -254,7 +254,7 @@ export class CoinFlictSdk {
           .accountsStrict({
             user: user,
             global: global,
-            feeRecipient: user,
+            feeRecipient: FEES_RECIPIENT,
             bondingCurve: bonding_curvePda,
             vault: vaultPda,
             bondingCurveAta: bondingCurveATA,
