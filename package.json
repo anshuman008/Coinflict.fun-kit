@@ -1,6 +1,6 @@
 {
   "name": "coinflict-kit",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "SDK for coinflict.fun - A Solana token launchpad platform",
   "main": "dist/index.js",
   "module": "dist/index.js",
