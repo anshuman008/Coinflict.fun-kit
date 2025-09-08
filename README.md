@@ -14,7 +14,6 @@ npm install coinflict-kit
 import { CoinFlictSdk } from 'coinflict-kit';
 import { Connection, clusterApiUrl } from '@solana/web3.js';
 
-// Initialize the SDK
 const connection = new Connection(clusterApiUrl('devnet'));
 const sdk = new CoinFlictSdk(connection);
 
